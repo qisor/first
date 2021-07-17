@@ -1,0 +1,217 @@
+1、文本读写
+    1.1：文本读写使用内置函数open()
+        open常用的参数有file（文件名），mode（模式），encoding（编码），errors（错误）
+    1.2：文本读写方式类似，只是mode的参数不同，r代表读取，w/a代表写，默认是文本格式t，可以指定为二进制格式b
+    1.3：读常用的方法：read，readline，readlines对应于写的write，writelines
+    1.3.1：
+2、表格读写
+    2.1：xlrd/xlwt库，新版不支持xlsx格式，读取最大行为65535
+        1、使用xlrd.open_workbook(file)创建一个工作表对象
+        2、使用 sheet_names()  方法获取workbook中所有工作表的名字
+        3、获取表格：以下三个函数都会返回一个xlrd.sheet.Sheet()对象
+            table = wb.sheets()[0]  # 通过索引顺序获取
+            table = wb.sheet_by_index(0)) #通过索引顺序获取
+            table = wb.sheet_by_name(sheet_name)#通过名称获取
+        4、行
+            nrows = table.nrows  #获取该sheet中的有效行数
+            table.row(rowx)  #返回由该行中所有的单元格对象组成的列表
+            table.row_slice(rowx)  #返回由该列中所有的单元格对象组成的列表,类型+数据
+            table.row_types(rowx, start_colx=0, end_colx=None)    #返回由该行中所有单元格的数据类型组成的列表
+            table.row_values(rowx, start_colx=0, end_colx=None)   #返回由该行中所有单元格的数据组成的列表
+            table.row_len(rowx) #返回该列的有效单元格长度
+        5、列
+            ncols = table.ncols   #获取列表的有效列数
+            table.col(colx, start_rowx=0, end_rowx=None)  #返回由该列中所有的单元格对象组成的列表
+            table.col_slice(colx, start_rowx=0, end_rowx=None)  #返回由该列中所有的单元格对象组成的列表
+            table.col_types(colx, start_rowx=0, end_rowx=None)    #返回由该列中所有单元格的数据类型组成的列表
+            table.col_values(colx, start_rowx=0, end_rowx=None)   #返回由该列中所有单元格的数据组成的列表
+        6、单元格cell
+            table.cell(rowx,colx)   #返回单元格对象 类型+数据
+            table.cell_type(rowx,colx)    #返回单元格中的数据类型
+            table.cell_value(rowx,colx)   #返回单元格中的数据
+            table.cell_xf_index(rowx, colx)   # 暂时还没有搞懂
+        7、遍历读取示例
+            for i in range(nrows):
+                for j in range(ncol):
+                    print(table.cell_value(i,j),end=" ")
+                print()
+
+        写表格：写需要先倒入xlwt库，即import xlwt
+            # 创建一个workbook 设置编码
+            workbook = xlwt.Workbook(encoding = 'utf-8')
+            # 创建一个worksheet
+            worksheet = workbook.add_sheet('My Worksheet')
+            # 写入excel
+            # 参数对应 行, 列, 值 worksheet.write(1,0, label = 'this is test')
+            # 保存    workbook.save('Excel_test.xls')
+        写入样式：
+            style = xlwt.XFStyle() # 初始化样式
+            font = xlwt.Font() # 为样式创建字体
+            font.name = 'Times New Roman'
+            font.bold = True # 黑体
+            font.underline = True # 下划线
+            font.italic = True # 斜体字
+            style.font = font # 设定样式
+            worksheet.write(0, 0, 'Unformatted value') # 不带样式的写入
+            worksheet.write(1, 0, 'Formatted value', style) # 带样式的写入
+
+            # 设置单元格宽度 worksheet.col(0).width = 3333
+
+
+    2.2：openpyxl
+        from openpyxl import Workbook或者from openpyxl import load_workbook
+        前者 不需要有excel文件存在 后者需要传入一个excel文件，前者可以凭空产生一个 后者不行,即读取和新建写入
+
+        openpyxl三步走
+        1、获取work book
+            使用workbook或load_workbook方法，例如
+            from openpyxl import Workbook
+            from openpyxl import load_workbook
+            wb = Workbook()
+            wb = load_workbook("file.xlsx")
+        2、获取 work sheet
+            使用 workbook.active方法获取当前工作表
+            使用 workbook[sheet_name] 获取指定表名的工作表 #直接在work_book后面[ sheet_name ]
+            使用 workbook.create_sheet([sheetname],[index]) 新建一张表，接受间隔可选参数：表名和索引，不给默认表名，在表后新建
+            使用 workbook.get_sheet_names()/workbook.sheetnames 获取所有工作表
+            Worksheet:
+                title：表格的标题
+                max_row：表格的最大行
+                min_row：表格的最小行
+                max_column：表格的最大列
+                min_column：表格的最小列
+                rows：按行获取单元格(Cell对象) - 生成器
+                columns：按列获取单元格(Cell对象) - 生成器
+                values：按行获取表格的内容(数据) - 生成器
+            Cell:
+                row：单元格所在的行
+                column：单元格坐在的列
+                value：单元格的值
+                coordinate：单元格的坐标
+
+        3、获取单元格 进行操作
+            遍历单元格
+                sheet = wb['sheetname']
+                for row in sheet.rows:
+                    # 循环遍历每一个单元格
+                    for cell in row:
+                        # 获取单元格的内容
+                        print(cell.value, end=',')
+                    print()
+        4、保存文件
+            使用save方法保存 workbook.save(filename)
+
+    2.3：pandas 数据分析常用的库，依赖于xlrd，openpyxl
+        import pandas as pd
+        file = "books.xls"
+        data = pd.read_excel(file) #读取表格文件，使用sheet_name参数指定表单
+
+        data= pd.to_excel(file) 进行写入表格
+        print(data)
+
+3、文档读写(python-docx库)
+    引入所需的库：import docx
+        from docx import Document
+        from docx.shared import Inches
+
+        document = Document()
+        # 添加标题，并设置级别，范围：0 至 9，默认为1
+        document.add_heading('Document Title', 0)
+        # 添加段落，文本可以包含制表符(\t)、换行符(\n)或回车符(\r)等
+        p = document.add_paragraph('A plain paragraph having some ')
+        # 在段落后面追加文本，并可设置样式
+        p.add_run('bold').bold = True
+        p.add_run(' and some ')
+        p.add_run('italic.').italic = True
+        document.add_heading('Heading, level 1', level=1)
+        document.add_paragraph('Intense quote', style='Intense Quote')
+        # 添加项目列表(前面一个小圆点)
+        document.add_paragraph(
+            'first item in unordered list', style='List Bullet'
+        )
+        document.add_paragraph('second item in unordered list', style='List Bullet')
+        # 添加项目列表(前面数字)
+        document.add_paragraph('first item in ordered list', style='List Number')
+        document.add_paragraph('second item in ordered list', style='List Number')
+        # 添加图片
+        document.add_picture(r'D:\Docs\pyfile\pic.png', width=Inches(1.25))
+        records = (
+            (3, '101', 'Spam'),
+            (7, '422', 'Eggs'),
+            (4, '631', 'Spam, spam, eggs, and spam')
+        )
+        # 添加表格：一行三列
+        # 表格样式参数可选：
+        # Normal Table
+        # Table Grid
+        # Light Shading、 Light Shading Accent 1 至 Light Shading Accent 6
+        # Light List、Light List Accent 1 至 Light List Accent 6
+        # Light Grid、Light Grid Accent 1 至 Light Grid Accent 6
+        # 太多了其它省略...
+        table = document.add_table(rows=1, cols=3, style='Light Shading Accent 2')
+        # 获取第一行的单元格列表
+        hdr_cells = table.rows[0].cells
+        # 下面三行设置上面第一行的三个单元格的文本值
+        hdr_cells[0].text = 'Qty'
+        hdr_cells[1].text = 'Id'
+        hdr_cells[2].text = 'Desc'
+        for qty, id, desc in records:
+            # 表格添加行，并返回行所在的单元格列表
+            row_cells = table.add_row().cells
+            row_cells[0].text = str(qty)
+            row_cells[1].text = id
+            row_cells[2].text = desc
+        document.add_page_break()
+        # 保存.docx文档
+        document.save('demo.docx')
+
+        # 创建的demo.docx内容如下：
+        from docx import Document
+
+        doc = Document('demo.docx')
+        # 每一段的内容
+        for para in doc.paragraphs:
+            print(para.text)
+        # 每一段的编号、内容
+        for i in range(len(doc.paragraphs)):
+            print(str(i), doc.paragraphs[i].text)
+        # 表格
+        tbs = doc.tables
+        for tb in tbs:
+            # 行
+            for row in tb.rows:
+                # 列
+                for cell in row.cells:
+                    print(cell.text)
+        # 也可以用下面方法
+        '''text = ''
+        for p in cell.paragraphs:
+        text += p.text
+        print(text)'''
+
+4、图片读写
+    网络获取图片，保存本地
+        import requests
+        url = "https://www.runoob.com/wp-content/uploads/2015/06/golist.jpg"
+        r = requests.get(url)
+        with open("go.png", mode="wb") as fp:
+            fp.write(r.content)
+
+5、pdf读写
+from PyPDF2 import PdfFileWriter, PdfFileReader
+
+output = PdfFileWriter()     // 1
+input1 = PdfFileReader(open("example.pdf", "rb")) // 2
+
+def delete_pdf(index):
+    pages = input1.getNumPages() // 3
+
+    for i in range(pages):
+        if i+1 in index:
+            continue
+    output.addPage(input1.getPage(i))  // 4
+
+    outputStream = open("PyPDF2-output.pdf", "wb")
+    output.write(outputStream)  // 5
+
+delete_pdf([2,3,4])
